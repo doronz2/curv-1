@@ -58,6 +58,30 @@ where
         )
     }
 
+
+    pub fn share_given_generator(t: usize, n: usize, secret: &P::Scalar, generator: P) -> (VerifiableSS<P>, Vec<P::Scalar>) {
+        assert!(t < n);
+        let poly = VerifiableSS::<P>::sample_polynomial(t, secret);
+        let index_vec: Vec<usize> = (1..=n).collect();
+        let secret_shares = VerifiableSS::<P>::evaluate_polynomial(&poly, &index_vec);
+
+        //let G: P = ECPoint::generator();
+        let G: P = generator;
+        let commitments = (0..poly.len())
+            .map(|i| G.clone() * poly[i].clone())
+            .collect::<Vec<P>>();
+        (
+            VerifiableSS {
+                parameters: ShamirSecretSharing {
+                    threshold: t,
+                    share_count: n,
+                },
+                commitments,
+            },
+            secret_shares,
+        )
+    }
+
     // generate VerifiableSS from a secret and user defined x values (in case user wants to distribute point f(1), f(4), f(6) and not f(1),f(2),f(3))
     pub fn share_at_indices(
         t: usize,
@@ -142,7 +166,7 @@ where
     // This is obviously less general than `newton_interpolation_general` as we
     // only get a single value, but it is much faster.
 
-    pub fn lagrange_interpolation_at_zero(points: &[P::Scalar], values: &[P::Scalar]) -> P::Scalar {
+    pub fn  lagrange_interpolation_at_zero(points: &[P::Scalar], values: &[P::Scalar]) -> P::Scalar {
         let vec_len = values.len();
 
         assert_eq!(points.len(), vec_len);
@@ -154,7 +178,9 @@ where
                 let yi = &values[i];
                 let num: P::Scalar = ECScalar::from(&BigInt::one());
                 let denum: P::Scalar = ECScalar::from(&BigInt::one());
-                let num = points.iter().zip(0..vec_len).fold(num, |acc, x| {
+                let num =
+                    points.iter().zip(0..vec_len).
+                        fold(num, |acc, x| {
                     if i != x.1 {
                         acc * x.0.clone()
                     } else {

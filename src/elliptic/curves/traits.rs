@@ -10,7 +10,7 @@ use std::ops::{Add, Mul};
 use crate::BigInt;
 use crate::ErrorKey;
 
-pub trait ECScalar: Mul<Output = Self> + Add<Output = Self> + Sized {
+pub trait ECScalar: Mul<Output = Self> + Add<Output = Self> + Sized + Clone{
     type SecretKey;
 
     fn new_random() -> Self;
@@ -28,14 +28,14 @@ pub trait ECScalar: Mul<Output = Self> + Add<Output = Self> + Sized {
 
 // TODO: add a fn is_point
 pub trait ECPoint:
-    Mul<<Self as ECPoint>::Scalar, Output = Self> + Add<Output = Self> + PartialEq
+    Mul<<Self as ECPoint>::Scalar, Output = Self> + Add<Output = Self> + PartialEq + Copy
 where
     Self: Sized,
 {
     type SecretKey;
     type PublicKey;
 
-    type Scalar: ECScalar<SecretKey = Self::SecretKey>;
+    type Scalar: ECScalar<SecretKey = Self::SecretKey> + Copy;
 
     fn base_point2() -> Self;
     fn generator() -> Self;
